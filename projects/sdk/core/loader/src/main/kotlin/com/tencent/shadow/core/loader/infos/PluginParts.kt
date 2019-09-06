@@ -25,5 +25,6 @@ import com.tencent.shadow.core.runtime.ShadowApplication
 class PluginParts(val application: ShadowApplication,
                   val classLoader: PluginClassLoader,
                   val resources: Resources,
-                  val businessName: String?
+                  val businessName: String?,
+                  val apkPath: String
 )

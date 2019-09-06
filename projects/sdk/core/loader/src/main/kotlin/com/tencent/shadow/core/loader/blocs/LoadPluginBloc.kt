@@ -105,7 +105,7 @@ object LoadPluginBloc {
 
             val buildResources = executorService.submit(Callable {
                 val packageInfo = getPackageInfo.get()
-                CreateResourceBloc.create(packageInfo, installedApk.apkFilePath, hostAppContext)
+                CreateResourceBloc.create(loadParameters, packageInfo, installedApk.apkFilePath, hostAppContext, pluginPartsMap)
             })
 
             val buildApplication = executorService.submit(Callable {
@@ -140,7 +140,8 @@ object LoadPluginBloc {
                             shadowApplication,
                             pluginClassLoader,
                             resources,
-                            pluginInfo.businessName
+                            pluginInfo.businessName,
+                            installedApk.apkFilePath
                     )
                     PluginPartInfoManager.addPluginInfo(pluginClassLoader, PluginPartInfo(shadowApplication, resources,
                             pluginClassLoader, pluginPackageManager))

@@ -21,17 +21,54 @@ package com.tencent.shadow.core.loader.blocs
 import android.content.Context
 import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
+import android.content.res.AssetManager
 import android.content.res.Resources
+import android.os.Build
+import com.tencent.shadow.core.load_parameters.LoadParameters
+import com.tencent.shadow.core.loader.infos.PluginParts
 
 object CreateResourceBloc {
-    fun create(packageArchiveInfo: PackageInfo, archiveFilePath: String, hostAppContext: Context): Resources {
-        val packageManager = hostAppContext.packageManager
-        packageArchiveInfo.applicationInfo.publicSourceDir = archiveFilePath
-        packageArchiveInfo.applicationInfo.sourceDir = archiveFilePath
-        try {
-            return packageManager.getResourcesForApplication(packageArchiveInfo.applicationInfo)
-        } catch (e: PackageManager.NameNotFoundException) {
-            throw RuntimeException(e)
+    fun create(loadParameters: LoadParameters, packageArchiveInfo: PackageInfo, archiveFilePath: String, hostAppContext: Context, pluginPartsMap: MutableMap<String, PluginParts>): Resources {
+
+        packageArchiveInfo.applicationInfo.apply {
+            publicSourceDir = archiveFilePath
+            sourceDir = archiveFilePath
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+
+            //加入宿主资源
+            val splitPublicSourceDirs = mutableListOf(hostAppContext.applicationInfo.sourceDir)
+
+            //加入依赖插件的资源
+            loadParameters.dependsOn?.forEach { partKey ->
+                splitPublicSourceDirs.add(pluginPartsMap[partKey]?.apkPath ?: "")
+            }
+
+            packageArchiveInfo.applicationInfo.splitPublicSourceDirs = splitPublicSourceDirs.toTypedArray()
+            try {
+                return hostAppContext.packageManager.getResourcesForApplication(packageArchiveInfo.applicationInfo)
+            } catch (e: PackageManager.NameNotFoundException) {
+                throw RuntimeException(e)
+            }
+        } else {
+            try {
+                val resource = hostAppContext.packageManager.getResourcesForApplication(packageArchiveInfo.applicationInfo)
+                val assetManager = resource.assets
+                val addAssetPath = AssetManager::class.java.getDeclaredMethod("addAssetPath", String::class.java)
+
+                //加入宿主资源
+                addAssetPath.invoke(assetManager, hostAppContext.packageResourcePath)
+
+                //加入依赖插件的资源
+                loadParameters.dependsOn?.forEach { partKey ->
+                    addAssetPath.invoke(assetManager, pluginPartsMap[partKey]?.apkPath)
+                }
+
+                return resource
+            } catch (e: Exception) {
+                throw RuntimeException(e)
+            }
         }
 
     }
