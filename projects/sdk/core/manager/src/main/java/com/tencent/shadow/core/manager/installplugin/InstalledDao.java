@@ -261,6 +261,7 @@ public class InstalledDao {
             row.version = pluginConfig.UUID_NickName;
             contentValues.add(row.toContentValues());
         }
+        installedPlugin.version = pluginConfig.version;
         installedPlugin.UUID = pluginConfig.UUID;
         installedPlugin.UUID_NickName = pluginConfig.UUID_NickName;
         return new Pair<>(installedPlugin, contentValues);

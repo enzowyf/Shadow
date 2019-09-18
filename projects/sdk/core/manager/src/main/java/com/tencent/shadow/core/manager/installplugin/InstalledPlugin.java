@@ -44,6 +44,11 @@ public class InstalledPlugin implements Serializable {
     public String UUID_NickName;
 
     /**
+     * 插件的版本
+     */
+    public int version;
+
+    /**
      * pluginLoader文件
      */
     public Part pluginLoaderFile;
