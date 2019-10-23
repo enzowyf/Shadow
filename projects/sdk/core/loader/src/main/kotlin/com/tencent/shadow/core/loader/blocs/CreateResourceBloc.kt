@@ -54,18 +54,22 @@ object CreateResourceBloc {
         } else {
             try {
                 val resource = hostAppContext.packageManager.getResourcesForApplication(packageArchiveInfo.applicationInfo)
-                val assetManager = resource.assets
+
+                val newAssetManager = AssetManager::class.java.newInstance()
+
                 val addAssetPath = AssetManager::class.java.getDeclaredMethod("addAssetPath", String::class.java)
 
                 //加入宿主资源
-                addAssetPath.invoke(assetManager, hostAppContext.packageResourcePath)
+                addAssetPath.invoke(newAssetManager, hostAppContext.packageResourcePath)
 
                 //加入依赖插件的资源
                 loadParameters.dependsOn?.forEach { partKey ->
-                    addAssetPath.invoke(assetManager, pluginPartsMap[partKey]?.apkPath)
+                    addAssetPath.invoke(newAssetManager, pluginPartsMap[partKey]?.apkPath)
                 }
 
-                return resource
+                return Resources(newAssetManager,
+                        resource.displayMetrics,
+                        resource.configuration)
             } catch (e: Exception) {
                 throw RuntimeException(e)
             }
